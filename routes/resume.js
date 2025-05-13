@@ -14,7 +14,7 @@ router.post('/upload', authMiddleware, upload.single('resume'), async (req, res)
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-
+    console.log("Inside the upload route");
     const userId = req.user.uid;
     const file = req.file;
     const fileExtension = file.originalname.split('.').pop();
@@ -86,7 +86,7 @@ router.post('/upload', authMiddleware, upload.single('resume'), async (req, res)
 });
 
 // Get user's resume
-router.get('/', authMiddleware, async (req, res) => {
+router.get('', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.uid;
     const userRef = doc(db, 'users', userId);
@@ -95,17 +95,13 @@ router.get('/', authMiddleware, async (req, res) => {
     if (!userDoc.exists()) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
     const userData = userDoc.data();
     
-    if (!userData.resumeURL) {
-      return res.status(404).json({ message: 'No resume found' });
-    }
     
     res.status(200).json({
-      resumeURL: userData.resumeURL,
-      resumeName: userData.resumeName,
-      resumeUpdatedAt: userData.resumeUpdatedAt,
+      resumeURL: userData.resumeURL || null,
+      resumeName: userData.resumeName || null,
+      resumeUpdatedAt: userData.resumeUpdatedAt ||null,
       isPublic: userData.resumePublic || false
     });
   } catch (error) {
@@ -134,7 +130,10 @@ router.delete('/', authMiddleware, async (req, res) => {
     // Delete the resume from storage
     const resumeRef = ref(storage, userData.resumePath);
     await deleteObject(resumeRef);
+    //TODO: alse delete the resume comments thread for this userrr.
     
+
+
     // Update user document
     await updateDoc(userRef, {
       resumeURL: null,
